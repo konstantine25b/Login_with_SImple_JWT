@@ -1,10 +1,8 @@
-import { createContext, useState } from "react";
+import { createContext, useEffect, useState } from "react";
 import { jwtDecode } from "jwt-decode";
 import { useHistory } from "react-router-dom/cjs/react-router-dom";
 
 const AuthContext = createContext();
-
-
 
 export default AuthContext;
 
@@ -23,7 +21,17 @@ export const AuthProvider = ({ children }) => {
 
   let history = useHistory();
 
-  useEffect(() => {}, [loading, authTokens]);
+  useEffect(() => {
+    let fourMinutes = 1000 * 4 * 60;
+    setInterval(() => {
+      if (authTokens) {
+        updateToken();
+      }
+    }, fourMinutes);
+    return () => {
+      clearInterval();
+    };
+  }, [loading, authTokens]);
 
   const loginUser = async (e) => {
     e.preventDefault();
@@ -62,7 +70,8 @@ export const AuthProvider = ({ children }) => {
   };
 
   let updateToken = async () => {
-    let response = await fetch("http://127.0.0.1:8000/api/token/", {
+    console.log("udatetoken called");
+    let response = await fetch("http://127.0.0.1:8000/api/token/refresh/", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -71,6 +80,7 @@ export const AuthProvider = ({ children }) => {
         refresh: authTokens.refresh,
       }),
     });
+
     if (response.status == 200) {
       let data = await response.json();
       setAuthTokens(data);
